@@ -7,49 +7,244 @@
 <title>Sasvanth AI Studio</title>
 <style>
 :root{--bg:#100e1d;--panel:#1c1930;--panel2:#27223f;--ink:#f8f6ff;--muted:#b7b1ca;--accent:#a78bfa;--accent2:#6ee7d8}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% 0%,#30245b 0,transparent 35%),var(--bg);color:var(--ink);font:15px system-ui,-apple-system,Segoe UI,sans-serif}
-main{max-width:560px;margin:auto;padding:22px 16px 40px}.brand{display:flex;align-items:center;gap:12px;margin:8px 0 22px}.logo{width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,#9b7bff,#5de2d2);display:grid;place-items:center;color:#17142b;font-size:24px;font-weight:900}.brand h1{font-size:20px;margin:0}.brand p{margin:3px 0 0;color:var(--muted);font-size:12px;letter-spacing:1.3px}
-.hero{padding:20px;border-radius:22px;background:linear-gradient(135deg,#302554,#1d2941);border:1px solid #514276}.hero h2{font-size:25px;line-height:1.15;margin:0 0 8px}.hero p{color:#d3cde7;margin:0}.tag{display:inline-block;margin-top:14px;padding:6px 10px;border-radius:99px;background:#ffffff16;color:#d9fff9;font-size:12px}
-.tabs{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:20px 0}.tab{padding:13px 10px;border-radius:14px;border:1px solid #48405f;background:var(--panel);color:var(--muted);font-weight:700}.tab.active{background:#3b2d64;color:white;border-color:var(--accent)}
-.card{background:var(--panel);border:1px solid #39334f;border-radius:18px;padding:16px;margin:13px 0}.card h3{margin:0 0 5px;font-size:16px}.hint{color:var(--muted);font-size:13px;margin:0 0 13px}
-label{display:block;font-size:13px;font-weight:650;margin:12px 0 7px}.file{width:100%;padding:12px;border:1px dashed #655b83;border-radius:12px;background:#151326;color:var(--muted)}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 80% 0%,#30245b 0,transparent 35%),var(--bg);color:var(--ink);font:15px system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:650px;margin:auto;padding:22px 16px 40px}
+.brand{display:flex;align-items:center;gap:12px;margin:8px 0 22px}
+.logo{width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,#9b7bff,#5de2d2);display:grid;place-items:center;color:#17142b;font-size:24px;font-weight:900}
+.brand h1{font-size:20px;margin:0}.brand p{margin:3px 0 0;color:var(--muted);font-size:12px;letter-spacing:1.3px}
+.hero{padding:20px;border-radius:22px;background:linear-gradient(135deg,#302554,#1d2941);border:1px solid #514276;margin-bottom:15px}
+.hero h2{font-size:26px;line-height:1.15;margin:0 0 8px}.hero p{color:#d3cde7;margin:0}
+.tag{display:inline-block;margin-top:14px;padding:6px 10px;border-radius:99px;background:#ffffff16;color:#d9fff9;font-size:12px}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:15px 0}
+.tool{background:var(--panel2);padding:15px;border-radius:16px;border:1px solid transparent;color:var(--ink);text-align:left;cursor:pointer;min-height:110px}
+.tool.active{border-color:var(--accent);background:#3b2d64}
+.tool span{font-size:24px}.tool b{display:block;margin-top:7px;font-size:15px}.tool small{color:var(--muted)}
+.card{background:var(--panel);border:1px solid #39334f;border-radius:18px;padding:16px;margin:13px 0}
+.card h3{margin:0 0 5px;font-size:18px}.hint{color:var(--muted);font-size:13px;margin:0 0 13px}
+label{display:block;font-size:13px;font-weight:650;margin:12px 0 7px}
+.file{width:100%;padding:12px;border:1px dashed #655b83;border-radius:12px;background:#151326;color:var(--muted)}
 textarea,select,input[type=text]{width:100%;background:#151326;border:1px solid #51496a;border-radius:12px;color:white;padding:12px;font:inherit}
-textarea{min-height:90px;resize:vertical}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{width:100%;border:0;border-radius:14px;padding:14px;background:linear-gradient(100deg,#a78bfa,#6ee7d8);color:#17142b;font-weight:850;font-size:15px;margin-top:15px}.notice{background:#2b2540;border-left:3px solid var(--accent);padding:12px;border-radius:10px;color:#ddd6f2;font-size:13px;line-height:1.45}.status{display:none;margin-top:12px;padding:12px;border-radius:12px;background:#173c3a;color:#c8fff5;font-size:13px}.features{display:grid;grid-template-columns:1fr 1fr;gap:10px}.feature{background:var(--panel2);padding:13px;border-radius:14px}.feature b{display:block;margin-top:5px}.feature span{font-size:22px}.foot{color:#8f89a5;font-size:11px;text-align:center;margin:22px 0}
+textarea{min-height:100px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{width:100%;border:0;border-radius:14px;padding:14px;background:linear-gradient(100deg,#a78bfa,#6ee7d8);color:#17142b;font-weight:850;font-size:15px;margin-top:15px;cursor:pointer}
+.secondary{background:#302749;color:white;border:1px solid #51496a}
+.notice{background:#2b2540;border-left:3px solid var(--accent);padding:12px;border-radius:10px;color:#ddd6f2;font-size:13px;line-height:1.45;margin-top:14px}
+.status{display:none;margin-top:12px;padding:12px;border-radius:12px;background:#173c3a;color:#c8fff5;font-size:13px;line-height:1.5}
+.preview{display:none;width:100%;max-height:320px;object-fit:contain;border-radius:12px;background:#080711;margin-top:12px}
+.foot{color:#8f89a5;font-size:11px;text-align:center;margin:22px 0}
+.hidden{display:none!important}
+.toolhead{font-size:18px;font-weight:800;margin:22px 0 10px}
 </style>
 </head>
 <body>
 <main>
-  <header class="brand"><div class="logo">S</div><div><h1>Sasvanth AI Studio</h1><p>CREATE · ANIMATE · SHARE</p></div></header>
-  <section class="hero"><h2>Bring photos and videos to life.</h2><p>Create talking portraits and lip-synced videos with Tamil or English audio.</p><span class="tag">English interface · Tamil + English features</span></section>
-  <section class="features" style="margin-top:14px">
-    <div class="feature"><span>🗣️</span><b>Photo Lip Sync</b><small>Make a still photo talk</small></div>
-    <div class="feature"><span>🎬</span><b>Video Lip Sync</b><small>Sync a video to speech</small></div>
-    <div class="feature"><span>🎨</span><b>Cartoon Maker</b><small>Animated character ideas</small></div>
-    <div class="feature"><span>📖</span><b>Tamil Stories</b><small>Story and voice concepts</small></div>
-  </section>
-  <div class="tabs"><button class="tab active" id="photoTab" onclick="switchMode('photo')">📷 Photo Lip Sync</button><button class="tab" id="videoTab" onclick="switchMode('video')">🎥 Video Lip Sync</button></div>
-  <section class="card">
-    <h3 id="modeTitle">Photo Lip Sync</h3><p class="hint" id="modeHint">Choose one clear face photo, then add the speech audio.</p>
-    <label id="mediaLabel">Upload a face photo</label>
-    <input class="file" id="media" type="file" accept="image/*">
-    <label>Upload speech audio (optional)</label>
-    <input class="file" id="audio" type="file" accept="audio/*">
-    <label>Or type your dialogue</label>
-    <textarea id="dialogue" placeholder="Type Tamil or English dialogue here..."></textarea>
-    <div class="row">
-      <div><label>Speech language</label><select id="lang"><option>Tamil</option><option>English</option><option>Auto detect</option></select></div>
-      <div><label>Output style</label><select id="style"><option>Natural</option><option>Cartoon</option><option>3D animation</option></select></div>
-    </div>
-    <button class="btn" onclick="prepare()">Prepare Lip Sync Video</button>
-    <div class="status" id="status"></div>
-  </section>
-  <div class="notice"><b>Prototype note:</b> This starter app gives you the mobile interface and upload flow. Actual AI lip-sync rendering needs a connected AI model/API. This file does not upload your media or generate a finished video yet. We can connect a free-tier service or a self-hosted model next; free services may have limits.</div>
-  <p class="foot">Sasvanth AI Studio · Starter prototype</p>
+<header class="brand">
+<div class="logo">S</div>
+<div><h1>Sasvanth AI Studio</h1><p>CREATE · ANIMATE · SHARE</p></div>
+</header>
+
+<section class="hero">
+<h2>Make your imagination move.</h2>
+<p>Create animations, talking photos, videos and voiceovers.</p>
+<span class="tag">English interface · Tamil + English prompts</span>
+</section>
+
+<div class="toolhead">✨ AI Creation Tools</div>
+<section class="tools">
+<button class="tool active" data-tool="photo" onclick="openTool('photo')"><span>🗣️</span><b>Photo Lip Sync</b><small>Make a photo talk</small></button>
+<button class="tool" data-tool="video" onclick="openTool('video')"><span>🎬</span><b>Video Lip Sync</b><small>Sync video to speech</small></button>
+<button class="tool" data-tool="animate" onclick="openTool('animate')"><span>🪄</span><b>Image to Animation</b><small>Animate a still photo</small></button>
+<button class="tool" data-tool="three" onclick="openTool('three')"><span>🧊</span><b>3D Image to Video</b><small>Depth and camera motion</small></button>
+<button class="tool" data-tool="textvideo" onclick="openTool('textvideo')"><span>🎥</span><b>Text to Video</b><small>Generate from a prompt</small></button>
+<button class="tool" data-tool="voice" onclick="openTool('voice')"><span>🎙️</span><b>Voiceover</b><small>Speak your text</small></button>
+<button class="tool" data-tool="promptlip" onclick="openTool('promptlip')"><span>💬</span><b>Prompt Lip Sync</b><small>Prompt + talking scene</small></button>
+<button class="tool" data-tool="trending" onclick="openTool('trending')"><span>🔥</span><b>Trending Videos</b><small>Ideas and prompts</small></button>
+<button class="tool" data-tool="cartoon" onclick="openTool('cartoon')"><span>🎨</span><b>Cartoon Maker</b><small>Character ideas</small></button>
+<button class="tool" data-tool="stories" onclick="openTool('stories')"><span>📖</span><b>Tamil Stories</b><small>Stories and narration</small></button>
+</section>
+
+<section class="card" id="workspace">
+<h3 id="toolTitle">Photo Lip Sync</h3>
+<p class="hint" id="toolHint">Upload a face photo and speech audio.</p>
+
+<div id="uploadArea">
+<label id="mediaLabel">Upload a face photo</label>
+<input class="file" id="media" type="file" accept="image/*">
+<img id="imagePreview" class="preview" alt="Image preview">
+<video id="videoPreview" class="preview" controls></video>
+<label>Upload audio (optional if dialogue is entered)</label>
+<input class="file" id="audio" type="file" accept="audio/*">
+<audio id="audioPreview" class="preview" controls></audio>
+</div>
+
+<div id="promptArea">
+<label id="promptLabel">Describe the animation or scene</label>
+<textarea id="prompt" placeholder="Describe what should happen in your video..."></textarea>
+</div>
+
+<div id="dialogueArea">
+<label>Dialogue or narration (optional)</label>
+<textarea id="dialogue" placeholder="Type Tamil or English speech here..."></textarea>
+</div>
+
+<div id="settingsArea" class="row">
+<div><label>Language</label>
+<select id="lang"><option>Tamil</option><option>English</option><option>Auto detect</option></select></div>
+<div><label>Style</label>
+<select id="style"><option>Natural</option><option>Cinematic</option><option>Cartoon</option><option>3D animation</option></select></div>
+</div>
+
+<div id="voiceSettings" class="row hidden">
+<div><label>Voice language</label>
+<select id="voiceLang"><option value="ta-IN">Tamil</option><option value="en-IN">English (India)</option><option value="en-US">English (US)</option></select></div>
+<div><label>Speech speed</label>
+<select id="speed"><option value="0.8">Slow</option><option value="1" selected>Normal</option><option value="1.15">Fast</option></select></div>
+</div>
+
+<button class="btn" id="mainButton" onclick="runTool()">Prepare</button>
+<button class="btn secondary hidden" id="stopVoice" onclick="stopSpeech()">Stop Voice</button>
+<div class="status" id="status"></div>
+</section>
+
+<section class="card hidden" id="trends">
+<h3>🔥 Video prompt ideas</h3>
+<p class="hint">Copy an idea into a video tool when a compatible engine is connected.</p>
+<div class="notice"><b>Fantasy:</b> A glowing magical forest, fireflies, cinematic camera movement, realistic lighting.</div>
+<div class="notice"><b>3D:</b> A cute cartoon character walking through a colorful miniature village, smooth camera orbit.</div>
+<div class="notice"><b>Tamil cinema:</b> A dramatic rainy street, a person walking in slow motion, cinematic lighting.</div>
+<div class="notice"><b>Nature:</b> A tiny bird flying over a waterfall, aerial camera, sunrise, realistic detail.</div>
+<div class="notice"><b>Surreal:</b> A giant moon over a peaceful village, clouds moving, dreamlike atmosphere.</div>
+<div class="notice"><b>Product:</b> A luxury product on a rotating display, dramatic studio lights and reflections.</div>
+</section>
+
+<div class="notice">
+<b>Free prototype:</b> This app provides the interface, media previews and browser voiceover. AI video generation and AI lip-sync rendering require a connected model or service. We will connect free options where possible. Do not put private API keys in this public GitHub file.
+</div>
+
+<p class="foot">Sasvanth AI Studio · Free-first creative workspace</p>
 </main>
+
 <script>
-let mode='photo';
-function switchMode(next){mode=next;document.getElementById('photoTab').classList.toggle('active',mode==='photo');document.getElementById('videoTab').classList.toggle('active',mode==='video');document.getElementById('modeTitle').textContent=mode==='photo'?'Photo Lip Sync':'Video Lip Sync';document.getElementById('modeHint').textContent=mode==='photo'?'Choose one clear face photo, then add the speech audio.':'Choose a video with a visible face, then add the replacement speech audio.';document.getElementById('mediaLabel').textContent=mode==='photo'?'Upload a face photo':'Upload a video';document.getElementById('media').accept=mode==='photo'?'image/*':'video/*';document.getElementById('media').value='';document.getElementById('status').style.display='none'}
-function prepare(){const f=document.getElementById('media').files[0],a=document.getElementById('audio').files[0],t=document.getElementById('dialogue').value.trim(),s=document.getElementById('status');if(!f){alert(mode==='photo'?'Please choose a photo first.':'Please choose a video first.');return}if(!a&&!t){alert('Please upload speech audio or type dialogue.');return}s.style.display='block';s.textContent='Your '+(mode==='photo'?'photo':'video')+' and speech inputs are selected. AI rendering is not connected in this prototype yet.'}
+let currentTool='photo';
+const titles={
+photo:'Photo Lip Sync',video:'Video Lip Sync',animate:'Image to Animation',
+three:'3D Image to Video',textvideo:'Text to Video',voice:'Voiceover Generator',
+promptlip:'Prompt-based Lip Sync',trending:'Trending AI Videos',
+cartoon:'Cartoon Maker',stories:'Tamil Stories'
+};
+const hints={
+photo:'Upload a face photo and audio to prepare a talking portrait.',
+video:'Upload a video and replacement speech audio.',
+animate:'Upload an image and describe how it should move.',
+three:'Upload an image and describe the 3D movement or camera motion.',
+textvideo:'Describe the video you want to create.',
+voice:'Type your text and preview spoken voice in your browser.',
+promptlip:'Describe a character, speech, scene and expression.',
+trending:'Explore ideas for trending creative video styles.',
+cartoon:'Describe a cartoon character or scene.',
+stories:'Write a Tamil or English story or narration.'
+};
+function openTool(tool){
+currentTool=tool;
+document.querySelectorAll('.tool').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
+document.getElementById('toolTitle').textContent=titles[tool];
+document.getElementById('toolHint').textContent=hints[tool];
+document.getElementById('status').style.display='none';
+document.getElementById('trends').classList.toggle('hidden',tool!=='trending');
+document.getElementById('workspace').classList.toggle('hidden',tool==='trending');
+const upload=document.getElementById('uploadArea');
+const promptArea=document.getElementById('promptArea');
+const dialogue=document.getElementById('dialogueArea');
+const settings=document.getElementById('settingsArea');
+const voiceSettings=document.getElementById('voiceSettings');
+const mediaLabel=document.getElementById('mediaLabel');
+const media=document.getElementById('media');
+const promptLabel=document.getElementById('promptLabel');
+const button=document.getElementById('mainButton');
+const stop=document.getElementById('stopVoice');
+stop.classList.add('hidden');
+if(tool==='photo'||tool==='video'){
+upload.classList.remove('hidden');promptArea.classList.add('hidden');
+mediaLabel.textContent=tool==='photo'?'Upload a face photo':'Upload a video';
+media.accept=tool==='photo'?'image/*':'video/*';
+dialogue.classList.remove('hidden');settings.classList.remove('hidden');voiceSettings.classList.add('hidden');
+button.textContent='Prepare Lip Sync';
+}else if(tool==='animate'||tool==='three'){
+upload.classList.remove('hidden');media.accept='image/*';mediaLabel.textContent='Upload an image';
+promptArea.classList.remove('hidden');promptLabel.textContent='Describe the motion';
+dialogue.classList.add('hidden');settings.classList.remove('hidden');voiceSettings.classList.add('hidden');
+button.textContent='Prepare Animation';
+}else if(tool==='textvideo'||tool==='promptlip'||tool==='cartoon'||tool==='stories'){
+upload.classList.add('hidden');promptArea.classList.remove('hidden');dialogue.classList.remove('hidden');
+settings.classList.remove('hidden');voiceSettings.classList.add('hidden');
+promptLabel.textContent=tool==='textvideo'?'Describe your video scene':tool==='promptlip'?'Describe the character and scene':'Describe what you want';
+button.textContent='Prepare Prompt';
+}else if(tool==='voice'){
+upload.classList.add('hidden');promptArea.classList.add('hidden');dialogue.classList.remove('hidden');
+document.getElementById('dialogue').placeholder='Enter the text you want spoken...';
+settings.classList.add('hidden');voiceSettings.classList.remove('hidden');
+button.textContent='Play Voice Preview';stop.classList.remove('hidden');
+}else{
+upload.classList.add('hidden');promptArea.classList.add('hidden');dialogue.classList.add('hidden');settings.classList.add('hidden');voiceSettings.classList.add('hidden');
+}
+}
+document.getElementById('media').addEventListener('change',function(){
+const file=this.files[0],img=document.getElementById('imagePreview'),vid=document.getElementById('videoPreview');
+img.style.display='none';vid.style.display='none';
+if(!file)return;
+const url=URL.createObjectURL(file);
+if(file.type.startsWith('image/')){img.src=url;img.style.display='block'}
+else if(file.type.startsWith('video/')){vid.src=url;vid.style.display='block'}
+});
+document.getElementById('audio').addEventListener('change',function(){
+const a=document.getElementById('audioPreview');
+if(this.files[0]){a.src=URL.createObjectURL(this.files[0]);a.style.display='block'}
+else a.style.display='none';
+});
+function showStatus(text){
+const s=document.getElementById('status');s.textContent=text;s.style.display='block';
+}
+function runTool(){
+const file=document.getElementById('media').files[0];
+const audio=document.getElementById('audio').files[0];
+const prompt=document.getElementById('prompt').value.trim();
+const dialogue=document.getElementById('dialogue').value.trim();
+if(currentTool==='voice'){
+if(!dialogue){alert('Please enter text for the voice preview.');return}
+playSpeech(dialogue);return;
+}
+if(currentTool==='photo'||currentTool==='video'){
+if(!file){alert('Please upload '+(currentTool==='photo'?'a photo':'a video')+' first.');return}
+if(!audio&&!dialogue){alert('Please upload audio or type dialogue.');return}
+showStatus('Your files are selected and previewed. An AI lip-sync engine must be connected to render the final video.');
+return;
+}
+if(currentTool==='animate'||currentTool==='three'){
+if(!file){alert('Please upload an image first.');return}
+if(!prompt){alert('Please describe the movement.');return}
+showStatus('Your image and motion prompt are ready. A compatible AI animation engine must be connected to render the video.');
+return;
+}
+if(currentTool==='textvideo'||currentTool==='promptlip'||currentTool==='cartoon'||currentTool==='stories'){
+if(!prompt&&!dialogue){alert('Please enter your prompt or text first.');return}
+showStatus('Your prompt is ready. Connect a compatible AI model to generate the requested content.');
+return;
+}
+}
+function playSpeech(text){
+if(!('speechSynthesis' in window)){showStatus('Voice preview is not supported in this browser.');return}
+window.speechSynthesis.cancel();
+const utter=new SpeechSynthesisUtterance(text);
+utter.lang=document.getElementById('voiceLang').value;
+utter.rate=parseFloat(document.getElementById('speed').value);
+utter.onstart=()=>showStatus('Speaking your text. Voice quality and Tamil availability depend on the voices installed in your phone/browser.');
+utter.onend=()=>showStatus('Voice preview finished.');
+utter.onerror=()=>showStatus('Voice preview could not play. Try another language or browser.');
+window.speechSynthesis.speak(utter);
+}
+function stopSpeech(){if('speechSynthesis' in window)window.speechSynthesis.cancel();showStatus('Voice playback stopped.')}
+openTool('photo');
 </script>
 </body>
 </html>
