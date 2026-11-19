@@ -45,6 +45,7 @@ textarea{min-height:100px;resize:vertical}
 button{cursor:pointer}
 .btn{width:100%;border:0;border-radius:14px;padding:14px;background:linear-gradient(100deg,#a78bfa,#6ee7d8);color:#17142b;font-weight:850;font-size:15px;margin-top:12px}
 .btn2{width:100%;border:1px solid #51496a;border-radius:12px;padding:12px;background:#27223f;color:white;font-weight:700;margin-top:10px}
+.dl-btn{display:none;text-align:center;text-decoration:none;background:#173c3a;color:#c8fff5;border-color:#2c7a74}
 .preview{width:100%;max-height:360px;object-fit:contain;border-radius:14px;margin-top:12px;display:none}
 #motionPreview{width:100%;overflow:hidden;border-radius:16px;background:#151326;min-height:180px;display:grid;place-items:center;margin-top:12px}
 #motionPreview img{max-width:100%;max-height:330px;object-fit:contain}
@@ -198,25 +199,38 @@ button{cursor:pointer}
 <label>2. Dialogue Text</label>
 <textarea id="photoDialogue" placeholder="Type Tamil or English dialogue..."></textarea>
 
-<label>3. Optional Audio File (MP3/WAV - for audio included in download)</label>
+<label>3. Optional Audio File (MP3/WAV - recommended for sound in download)</label>
 <input type="file" id="photoAudioFile" accept="audio/*">
 
 <canvas id="exportCanvas" width="720" height="720" style="width:100%;max-height:360px;border-radius:14px;margin-top:12px;background:#151326;display:none;"></canvas>
 
 <button class="btn" onclick="startTalkingExport()">🎬 Generate & Download Video (Free)</button>
 <div id="photoExportStatus" class="status"></div>
-<a id="downloadVideoLink" class="btn2" style="display:none;text-align:center;text-decoration:none;background:#173c3a;color:#c8fff5;">⬇️ Save Video File</a>
+<a id="downloadVideoLink" class="btn2 dl-btn">⬇️ Save Video File</a>
+<div class="notice">Note: For sound inside the downloaded video file, upload an audio file (MP3/WAV). True AI lip-sync mouth movement requires an AI backend/model.</div>
 </section>
 
-<!-- VIDEO LIP SYNC -->
+<!-- VIDEO LIP SYNC + FREE DOWNLOAD -->
 <section id="videoLip" class="panel card">
-<h3>🎬 Video Lip Sync</h3>
-<p class="hint">Upload a video for preview.</p>
+<h3>🎬 Video Lip Sync & Download</h3>
+<p class="hint">Upload a video, add replacement dialogue or an audio file, and export a downloadable video.</p>
+
+<label>1. Upload Video</label>
 <input type="file" id="videoFile" accept="video/*">
-<video id="videoPreview" class="preview" controls></video>
-<label>Replacement dialogue</label>
+<video id="videoPreview" class="preview" controls playsinline></video>
+
+<label>2. Replacement dialogue / subtitle</label>
 <textarea id="videoDialogue" placeholder="Type replacement dialogue..."></textarea>
-<div class="notice">A real lip-sync engine is required to alter mouth movement and replace speech.</div>
+
+<label>3. Optional Replacement Audio (MP3/WAV)</label>
+<input type="file" id="videoAudioFile" accept="audio/*">
+
+<canvas id="videoExportCanvas" width="720" height="720" style="display:none;"></canvas>
+
+<button class="btn" onclick="startVideoLipExport()">🎬 Render & Download Video (Free)</button>
+<div id="videoLipStatus" class="status"></div>
+<a id="downloadVideoLipLink" class="btn2 dl-btn">⬇️ Save Lip-Sync Video</a>
+<div class="notice">Browser export records the video frames + subtitle/audio. True AI lip-sync mouth warping requires a connected lip-sync model/server.</div>
 </section>
 
 <!-- TRENDING -->
@@ -390,6 +404,41 @@ function useIdea(text){
  openTool('textVideo');
 }
 
+// Helper for safe MediaRecorder mimeType
+function getSupportedMimeType(){
+ const types=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4'];
+ for(const t of types){
+  if(typeof MediaRecorder!=='undefined' && MediaRecorder.isTypeSupported(t)) return t;
+ }
+ return '';
+}
+
+function drawCoverImage(ctx, img, cw, ch, scale=1, offsetX=0, offsetY=0){
+ const imgRatio = img.width / img.height;
+ const canvasRatio = cw / ch;
+ let drawW, drawH;
+ if(imgRatio > canvasRatio){
+  drawH = ch * scale;
+  drawW = drawH * imgRatio;
+ } else {
+  drawW = cw * scale;
+  drawH = drawW / imgRatio;
+ }
+ const x = (cw - drawW)/2 + offsetX;
+ const y = (ch - drawH)/2 + offsetY;
+ ctx.drawImage(img, x, y, drawW, drawH);
+}
+
+function drawCaptionBox(ctx, text, cw, ch){
+ if(!text) return;
+ ctx.fillStyle = 'rgba(0, 0, 0, 0.72)';
+ ctx.fillRect(24, ch - 115, cw - 48, 86);
+ ctx.fillStyle = '#ffffff';
+ ctx.font = 'bold 25px sans-serif';
+ ctx.textAlign = 'center';
+ ctx.fillText(text.slice(0, 46), cw / 2, ch - 63);
+}
+
 // PHOTO LIP SYNC + FREE VIDEO EXPORT
 let loadedPhotoImg = null;
 
@@ -403,7 +452,7 @@ function loadPhotoToCanvas() {
     canvas.style.display = 'block';
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    drawCoverImage(ctx, img, canvas.width, canvas.height, 1);
   };
   img.src = URL.createObjectURL(f);
 }
@@ -415,12 +464,13 @@ async function startTalkingExport() {
   if (!dialogue && !audioFile) { alert('Enter dialogue or upload an audio file.'); return; }
 
   const canvas = document.getElementById('exportCanvas');
+  canvas.style.display = 'block';
   const ctx = canvas.getContext('2d');
   const status = document.getElementById('photoExportStatus');
   const dlLink = document.getElementById('downloadVideoLink');
   dlLink.style.display = 'none';
   status.style.display = 'block';
-  status.textContent = 'Recording video... Please wait until playback finishes.';
+  status.textContent = 'Recording video... Please wait until finished.';
 
   const canvasStream = canvas.captureStream(30);
   let combinedStream = canvasStream;
@@ -428,7 +478,9 @@ async function startTalkingExport() {
 
   if (audioFile) {
     audioEl = new Audio(URL.createObjectURL(audioFile));
-    const audioCtx = new AudioContext();
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContextClass();
+    await audioCtx.resume();
     const src = audioCtx.createMediaElementSource(audioEl);
     const dest = audioCtx.createMediaStreamDestination();
     src.connect(dest);
@@ -436,16 +488,23 @@ async function startTalkingExport() {
     combinedStream = new MediaStream([...canvasStream.getVideoTracks(), ...dest.stream.getAudioTracks()]);
   }
 
-  const recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
+  const mimeType = getSupportedMimeType();
+  const recorder = mimeType ? new MediaRecorder(combinedStream, { mimeType }) : new MediaRecorder(combinedStream);
   const chunks = [];
-  recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+  let finished = false;
+
+  recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
   recorder.onstop = () => {
-    const blob = new Blob(chunks, { type: 'video/webm' });
+    if (finished) return;
+    finished = true;
+    const ext = (recorder.mimeType || '').includes('mp4') ? 'mp4' : 'webm';
+    const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
     const url = URL.createObjectURL(blob);
     dlLink.href = url;
-    dlLink.download = 'sasvanth-talking-video.webm';
+    dlLink.download = `sasvanth-talking-video.${ext}`;
+    dlLink.textContent = `⬇️ Save Video File (.${ext})`;
     dlLink.style.display = 'block';
-    status.textContent = 'Done! Tap "Save Video File" below to download.';
+    status.textContent = 'Done! Tap the download button below to save your video.';
   };
 
   let animId;
@@ -453,48 +512,129 @@ async function startTalkingExport() {
   function drawLoop() {
     frame++;
     const scale = 1 + Math.sin(frame * 0.08) * 0.03;
-    const w = canvas.width * scale;
-    const h = canvas.height * scale;
-    const x = (canvas.width - w) / 2;
-    const y = (canvas.height - h) / 2;
-
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(loadedPhotoImg, x, y, w, h);
-
-    if (dialogue) {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
-      ctx.fillRect(30, canvas.height - 110, canvas.width - 60, 80);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 26px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(dialogue.slice(0, 45), canvas.width / 2, canvas.height - 62);
-    }
+    drawCoverImage(ctx, loadedPhotoImg, canvas.width, canvas.height, scale);
+    drawCaptionBox(ctx, dialogue, canvas.width, canvas.height);
     animId = requestAnimationFrame(drawLoop);
+  }
+
+  function stopRecording(){
+    cancelAnimationFrame(animId);
+    if (recorder.state !== 'inactive') recorder.stop();
   }
 
   recorder.start();
   drawLoop();
 
   if (audioEl) {
-    audioEl.play();
-    audioEl.onended = () => {
-      cancelAnimationFrame(animId);
-      recorder.stop();
-    };
+    audioEl.play().catch(()=>{});
+    audioEl.onended = stopRecording;
+    setTimeout(stopRecording, 60000);
   } else {
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(dialogue);
-    u.lang = 'ta-IN';
-    u.onend = () => {
-      cancelAnimationFrame(animId);
-      recorder.stop();
-    };
-    u.onerror = () => {
-      cancelAnimationFrame(animId);
-      recorder.stop();
-    };
-    speechSynthesis.speak(u);
+    if ('speechSynthesis' in window) {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(dialogue);
+      u.lang = 'ta-IN';
+      u.onend = stopRecording;
+      u.onerror = stopRecording;
+      speechSynthesis.speak(u);
+    }
+    const estMs = Math.min(25000, Math.max(4000, dialogue.length * 90));
+    setTimeout(stopRecording, estMs);
   }
+}
+
+// VIDEO LIP SYNC + FREE DOWNLOAD
+async function startVideoLipExport(){
+  const videoFile = document.getElementById('videoFile').files[0];
+  if (!videoFile) { alert('Please upload a video first.'); return; }
+
+  const dialogue = document.getElementById('videoDialogue').value.trim();
+  const audioFile = document.getElementById('videoAudioFile').files[0];
+
+  const srcVideo = document.createElement('video');
+  srcVideo.src = URL.createObjectURL(videoFile);
+  srcVideo.playsInline = true;
+  srcVideo.muted = !!audioFile;
+
+  const status = document.getElementById('videoLipStatus');
+  const dlLink = document.getElementById('downloadVideoLipLink');
+  dlLink.style.display = 'none';
+  status.style.display = 'block';
+  status.textContent = 'Loading video...';
+
+  await new Promise((res, rej) => {
+    srcVideo.onloadedmetadata = res;
+    srcVideo.onerror = () => rej(new Error('Video load failed'));
+  });
+
+  const canvas = document.getElementById('videoExportCanvas');
+  canvas.width = 720;
+  canvas.height = Math.round(720 * (srcVideo.videoHeight / (srcVideo.videoWidth || 720))) || 720;
+  const ctx = canvas.getContext('2d');
+
+  const canvasStream = canvas.captureStream(30);
+  let audioTracks = [];
+
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  const audioCtx = new AudioContextClass();
+  await audioCtx.resume();
+  const dest = audioCtx.createMediaStreamDestination();
+
+  let customAudio = null;
+  if (audioFile) {
+    customAudio = new Audio(URL.createObjectURL(audioFile));
+    const aSrc = audioCtx.createMediaElementSource(customAudio);
+    aSrc.connect(dest);
+    aSrc.connect(audioCtx.destination);
+    audioTracks = dest.stream.getAudioTracks();
+  } else if (typeof srcVideo.captureStream === 'function') {
+    const vStream = srcVideo.captureStream();
+    audioTracks = vStream.getAudioTracks();
+  }
+
+  const combinedStream = new MediaStream([...canvasStream.getVideoTracks(), ...audioTracks]);
+  const mimeType = getSupportedMimeType();
+  const recorder = mimeType ? new MediaRecorder(combinedStream, { mimeType }) : new MediaRecorder(combinedStream);
+  const chunks = [];
+  let finished = false;
+
+  recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+  recorder.onstop = () => {
+    if (finished) return;
+    finished = true;
+    const ext = (recorder.mimeType || '').includes('mp4') ? 'mp4' : 'webm';
+    const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    dlLink.href = url;
+    dlLink.download = `sasvanth-lipsync-video.${ext}`;
+    dlLink.textContent = `⬇️ Save Lip-Sync Video (.${ext})`;
+    dlLink.style.display = 'block';
+    status.textContent = 'Done! Tap the download button below to save your video.';
+  };
+
+  let animId;
+  function drawVideoFrame(){
+    if (srcVideo.paused || srcVideo.ended) return;
+    ctx.drawImage(srcVideo, 0, 0, canvas.width, canvas.height);
+    drawCaptionBox(ctx, dialogue, canvas.width, canvas.height);
+    animId = requestAnimationFrame(drawVideoFrame);
+  }
+
+  function finishVideoExport(){
+    cancelAnimationFrame(animId);
+    if (customAudio) customAudio.pause();
+    if (recorder.state !== 'inactive') recorder.stop();
+  }
+
+  status.textContent = 'Rendering video... Please wait until playback ends.';
+  recorder.start();
+  await srcVideo.play();
+  if (customAudio) customAudio.play().catch(()=>{});
+  drawVideoFrame();
+
+  srcVideo.onended = finishVideoExport;
+  setTimeout(finishVideoExport, Math.min(90000, Math.max(8000, (srcVideo.duration || 10) * 1000 + 3000)));
 }
 </script>
 </body>
