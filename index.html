@@ -6,6 +6,11 @@
 <meta name="theme-color" content="#17142b">
 <title>Sasvanth AI Studio</title>
 
+<script type="module">
+  import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
+  window.GradioClient = Client;
+</script>
+
 <style>
 :root{
  --bg:#100e1d;--panel:#1c1930;--panel2:#27223f;
@@ -207,7 +212,7 @@ button{cursor:pointer}
 <button class="btn" onclick="startTalkingExport()">🎬 Generate & Download Video (Free)</button>
 <div id="photoExportStatus" class="status"></div>
 <a id="downloadVideoLink" class="btn2 dl-btn">⬇️ Save Video File</a>
-<div class="notice">Note: For sound inside the downloaded video file, upload an audio file (MP3/WAV). True AI lip-sync mouth movement requires an AI backend/model.</div>
+<div class="notice">Note: For sound inside the downloaded video file, upload an audio file (MP3/WAV). True AI lip-sync mouth movement requires a connected Hugging Face Space / AI model.</div>
 </section>
 
 <!-- VIDEO LIP SYNC + FREE DOWNLOAD -->
@@ -230,7 +235,7 @@ button{cursor:pointer}
 <button class="btn" onclick="startVideoLipExport()">🎬 Render & Download Video (Free)</button>
 <div id="videoLipStatus" class="status"></div>
 <a id="downloadVideoLipLink" class="btn2 dl-btn">⬇️ Save Lip-Sync Video</a>
-<div class="notice">Browser export records the video frames + subtitle/audio. True AI lip-sync mouth warping requires a connected lip-sync model/server.</div>
+<div class="notice">Uses Hugging Face Gradio Space when configured; otherwise exports video + audio/subtitle in browser for free.</div>
 </section>
 
 <!-- TRENDING -->
@@ -268,6 +273,8 @@ button{cursor:pointer}
 </main>
 
 <script>
+const HF_SPACE_NAME = ""; // உங்கள் Hugging Face Space பெயரை இங்கே போடுங்கள் (எ.கா: "username/lip-sync-space")
+
 let currentMotionURL=null;
 let availableVoices=[];
 
@@ -404,7 +411,6 @@ function useIdea(text){
  openTool('textVideo');
 }
 
-// Helper for safe MediaRecorder mimeType
 function getSupportedMimeType(){
  const types=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4'];
  for(const t of types){
@@ -544,97 +550,145 @@ async function startTalkingExport() {
   }
 }
 
-// VIDEO LIP SYNC + FREE DOWNLOAD
+// VIDEO LIP SYNC + HUGGING FACE GRADIO + FREE BROWSER FALLBACK
 async function startVideoLipExport(){
   const videoFile = document.getElementById('videoFile').files[0];
   if (!videoFile) { alert('Please upload a video first.'); return; }
 
   const dialogue = document.getElementById('videoDialogue').value.trim();
   const audioFile = document.getElementById('videoAudioFile').files[0];
+  const status = document.getElementById('videoLipStatus');
+  const dlLink = document.getElementById('downloadVideoLipLink');
 
+  dlLink.style.display = 'none';
+  status.style.display = 'block';
+
+  // 1. Hugging Face Space இணைக்கப்பட்டிருந்தால்
+  if (HF_SPACE_NAME && window.GradioClient && audioFile) {
+    try {
+      status.textContent = 'Connecting to Hugging Face AI Lip-Sync Space...';
+      const client = await window.GradioClient.connect(HF_SPACE_NAME);
+      status.textContent = 'Processing AI lip-sync... Please wait.';
+      const result = await client.predict("/predict", {
+        video: videoFile,
+        audio: audioFile
+      });
+      const out = result && result.data ? result.data[0] : null;
+      const outUrl = typeof out === 'string' ? out : (out && out.url);
+      if (outUrl) {
+        const preview = document.getElementById('videoPreview');
+        preview.src = outUrl;
+        preview.style.display = 'block';
+        dlLink.href = outUrl;
+        dlLink.download = 'sasvanth-ai-lipsync.mp4';
+        dlLink.textContent = '⬇️ Save AI Lip-Sync Video (.mp4)';
+        dlLink.style.display = 'block';
+        status.textContent = 'AI Lip-Sync ready! Tap Download below.';
+        return;
+      }
+    } catch (hfErr) {
+      status.textContent = 'HF Space busy/error (' + (hfErr.message || hfErr) + '). Running free browser export...';
+    }
+  }
+
+  // 2. Free Browser Export Fallback
   const srcVideo = document.createElement('video');
   srcVideo.src = URL.createObjectURL(videoFile);
   srcVideo.playsInline = true;
   srcVideo.muted = !!audioFile;
 
-  const status = document.getElementById('videoLipStatus');
-  const dlLink = document.getElementById('downloadVideoLipLink');
-  dlLink.style.display = 'none';
-  status.style.display = 'block';
-  status.textContent = 'Loading video...';
+  status.textContent = 'Loading video for browser export...';
+  try {
+    await new Promise((res, rej) => {
+      srcVideo.onloadedmetadata = res;
+      srcVideo.onerror = () => rej(new Error('Video load failed'));
+    });
 
-  await new Promise((res, rej) => {
-    srcVideo.onloadedmetadata = res;
-    srcVideo.onerror = () => rej(new Error('Video load failed'));
-  });
+    const canvas = document.getElementById('videoExportCanvas');
+    canvas.width = 720;
+    canvas.height = Math.round(720 * (srcVideo.videoHeight / (srcVideo.videoWidth || 720))) || 720;
+    const ctx = canvas.getContext('2d');
 
-  const canvas = document.getElementById('videoExportCanvas');
-  canvas.width = 720;
-  canvas.height = Math.round(720 * (srcVideo.videoHeight / (srcVideo.videoWidth || 720))) || 720;
-  const ctx = canvas.getContext('2d');
+    const canvasStream = canvas.captureStream(24);
+    let audioTracks = [];
 
-  const canvasStream = canvas.captureStream(30);
-  let audioTracks = [];
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    let customAudio = null;
 
-  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  const audioCtx = new AudioContextClass();
-  await audioCtx.resume();
-  const dest = audioCtx.createMediaStreamDestination();
+    if (audioFile && AudioContextClass) {
+      try {
+        const audioCtx = new AudioContextClass();
+        if (audioCtx.state === 'suspended') await audioCtx.resume();
+        customAudio = new Audio(URL.createObjectURL(audioFile));
+        customAudio.playsInline = true;
+        const aSrc = audioCtx.createMediaElementSource(customAudio);
+        const dest = audioCtx.createMediaStreamDestination();
+        aSrc.connect(dest);
+        aSrc.connect(audioCtx.destination);
+        audioTracks = dest.stream.getAudioTracks();
+      } catch (e) {
+        customAudio = null;
+      }
+    } else if (typeof srcVideo.captureStream === 'function') {
+      const vStream = srcVideo.captureStream();
+      audioTracks = vStream.getAudioTracks();
+    }
 
-  let customAudio = null;
-  if (audioFile) {
-    customAudio = new Audio(URL.createObjectURL(audioFile));
-    const aSrc = audioCtx.createMediaElementSource(customAudio);
-    aSrc.connect(dest);
-    aSrc.connect(audioCtx.destination);
-    audioTracks = dest.stream.getAudioTracks();
-  } else if (typeof srcVideo.captureStream === 'function') {
-    const vStream = srcVideo.captureStream();
-    audioTracks = vStream.getAudioTracks();
+    const combinedStream = new MediaStream([...canvasStream.getVideoTracks(), ...audioTracks]);
+    const mimeType = getSupportedMimeType();
+    const recorder = mimeType ? new MediaRecorder(combinedStream, { mimeType }) : new MediaRecorder(combinedStream);
+    const chunks = [];
+    let finished = false;
+    let animId = null;
+
+    recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+    recorder.onstop = () => {
+      if (finished) return;
+      finished = true;
+      const ext = (recorder.mimeType || '').includes('mp4') ? 'mp4' : 'webm';
+      const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
+      if (!blob.size) {
+        status.textContent = 'Export failed. Try MP3 audio or a shorter clip.';
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      dlLink.href = url;
+      dlLink.download = `sasvanth-lipsync-video.${ext}`;
+      dlLink.textContent = `⬇️ Save Video (.${ext})`;
+      dlLink.style.display = 'block';
+      status.textContent = 'Done! Tap Download below to save your video.';
+    };
+
+    function drawVideoFrame(){
+      if (finished) return;
+      ctx.drawImage(srcVideo, 0, 0, canvas.width, canvas.height);
+      drawCaptionBox(ctx, dialogue, canvas.width, canvas.height);
+      if (!srcVideo.paused && !srcVideo.ended) {
+        animId = requestAnimationFrame(drawVideoFrame);
+      }
+    }
+
+    function finishVideoExport(){
+      if (animId) cancelAnimationFrame(animId);
+      try { srcVideo.pause(); } catch(e){}
+      try { if (customAudio) customAudio.pause(); } catch(e){}
+      if (recorder.state !== 'inactive') recorder.stop();
+    }
+
+    status.textContent = 'Rendering video... Please wait until playback ends.';
+    recorder.start();
+    await srcVideo.play();
+    if (customAudio) {
+      customAudio.play().catch(()=>{});
+    }
+    drawVideoFrame();
+
+    srcVideo.onended = finishVideoExport;
+    const durationMs = isFinite(srcVideo.duration) && srcVideo.duration > 0 ? srcVideo.duration * 1000 + 2500 : 20000;
+    setTimeout(finishVideoExport, Math.min(120000, Math.max(6000, durationMs)));
+  } catch (err) {
+    status.textContent = 'Error: ' + (err && err.message ? err.message : 'Try another file.');
   }
-
-  const combinedStream = new MediaStream([...canvasStream.getVideoTracks(), ...audioTracks]);
-  const mimeType = getSupportedMimeType();
-  const recorder = mimeType ? new MediaRecorder(combinedStream, { mimeType }) : new MediaRecorder(combinedStream);
-  const chunks = [];
-  let finished = false;
-
-  recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
-  recorder.onstop = () => {
-    if (finished) return;
-    finished = true;
-    const ext = (recorder.mimeType || '').includes('mp4') ? 'mp4' : 'webm';
-    const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
-    const url = URL.createObjectURL(blob);
-    dlLink.href = url;
-    dlLink.download = `sasvanth-lipsync-video.${ext}`;
-    dlLink.textContent = `⬇️ Save Lip-Sync Video (.${ext})`;
-    dlLink.style.display = 'block';
-    status.textContent = 'Done! Tap the download button below to save your video.';
-  };
-
-  let animId;
-  function drawVideoFrame(){
-    if (srcVideo.paused || srcVideo.ended) return;
-    ctx.drawImage(srcVideo, 0, 0, canvas.width, canvas.height);
-    drawCaptionBox(ctx, dialogue, canvas.width, canvas.height);
-    animId = requestAnimationFrame(drawVideoFrame);
-  }
-
-  function finishVideoExport(){
-    cancelAnimationFrame(animId);
-    if (customAudio) customAudio.pause();
-    if (recorder.state !== 'inactive') recorder.stop();
-  }
-
-  status.textContent = 'Rendering video... Please wait until playback ends.';
-  recorder.start();
-  await srcVideo.play();
-  if (customAudio) customAudio.play().catch(()=>{});
-  drawVideoFrame();
-
-  srcVideo.onended = finishVideoExport;
-  setTimeout(finishVideoExport, Math.min(90000, Math.max(8000, (srcVideo.duration || 10) * 1000 + 3000)));
 }
 </script>
 </body>
